@@ -127,7 +127,7 @@ found: MOV AX,SI ; AL = index of the character
     POP CX
     POP AX
     RET
-ENDP Encrypt
+ENDP Decrypt
 
  
 PROC NewLine NEAR
