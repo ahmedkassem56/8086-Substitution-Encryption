@@ -13,6 +13,7 @@ DMSG DB "Decrypted:$"
 
 EOUT DB 32 dup(0)
 DOUT DB 32 dup(0)
+OUT_INDX DB 0
 
 NLINE DB 13,10, '$'
 
@@ -43,26 +44,33 @@ buff        db  32        ;MAX NUMBER OF CHARACTERS ALLOWED (32).
     
     MOV SI, offset buff+2   ; SI points to the beginning of the input string
     MOV AH,0  
-             
-; encrypting             
+    MOV DI,0         
+           
 loop1: MOV AL, [si]      ; read the character
-       SUB AL, 61h       ; index relative to 'a'
-       LEA BX, ENC       ; table B contains the encrypted characters
-       ADD BL, AL        ; add index
-       MOV DL, [BX]      ; printing encrypted character
-       CALL OutChar
-       INC si            ; increasing SI to point to the next char
+       CALL Encrypt
+       CALL Decrypt
+       
+       INC SI            ; increasing SI to point to the next char 
+       INC DI            ; increasing DI to point to the next empty char
        LOOP loop1        ; looping over the string                
        
-; decrypting (assuming that the input text is the encrypted one)  
     
-      
+                 
     
 here: jmp here   
         
 ret
  
 PROC Encrypt NEAR
+    PUSH AX
+    PUSH BX
+    SUB AL, 61h       ; index relative to 'a'
+    LEA BX, ENC       ; table B contains the encrypted characters
+    ADD BL, AL        ; add index
+    MOV AL,[BX]       ; load encrypted character to AL
+    MOV EOUT[DI],AL   ; save to memory
+    POP BX
+    POP AX
     RET
 ENDP Encrypt
 
