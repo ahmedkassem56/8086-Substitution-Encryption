@@ -38,7 +38,7 @@ main:LEA DX,IMSG   ; offset of the message to DX
       
     CALL NewLine
     
-    MOV CL,buff+1    ; CL = number of entered characters
+    MOV CL,buff+1    ; CL = number of input characters
     MOV CH,0
     
     MOV SI, offset buff+2   ; SI points to the beginning of the input string
@@ -52,7 +52,7 @@ loop1: MOV AL, [si]      ; read the character, input for Encrypt and Decrypt
        
        MOV AL, EOUT[DI]  ; input for Decrypt is the output of Encrypt
        LEA DX, OOUT      ; output of Decrypt pointed to OOUT (Original Output) 
-       CALL Decrypt
+       CALL Decrypt       
        
        INC SI            ; increasing SI to point to the next char 
        INC DI            ; increasing DI to point to the next empty char
