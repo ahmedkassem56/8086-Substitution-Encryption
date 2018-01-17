@@ -59,7 +59,7 @@ loop1: MOV AL, [si]      ; read the character, input for Encrypt and Decrypt
        LOOP loop1        ; looping over the string 
                    
     
-    ; adding '$' to EOUT and DOUT
+    ; adding '$' to EOUT and DOUT (end of string so that we can print it)
     MOV EOUT[DI+1],'$'   
     MOV DOUT[DI+1],'$'
     MOV OOUT[DI+1],'$'
@@ -113,7 +113,7 @@ PROC Decrypt NEAR
     LEA BX,ENC
     MOV CL,26
     
-loop2: CMP ENC[SI], AL
+loop2: CMP ENC[SI], AL ; comparing AL with the look up table elements 
        JE found
        INC SI
        LOOP loop2 
