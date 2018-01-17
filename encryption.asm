@@ -13,7 +13,6 @@ DMSG DB "Decrypted:$"
 
 EOUT DB 32 dup(0)
 DOUT DB 32 dup(0)
-OUT_INDX DB 0
 
 NLINE DB 13,10, '$'
 
