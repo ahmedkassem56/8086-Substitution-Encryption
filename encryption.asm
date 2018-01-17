@@ -9,10 +9,12 @@ ENC   DB  71h,77h,65h,72h,74h,79h,75h,69h,6Fh,70h,61h,73h,64h,66h,67h,68h,6Ah,6B
 
 IMSG DB "Enter your input string:$"
 EMSG DB "Encrypted:$"
-DMSG DB "Decrypted:$"  
+DMSG DB "Decrypted (Assuming the input is already encrypted):$"  
+OMSG DB "Original message after decrypting:$"  
 
 EOUT DB 32 dup(0)
 DOUT DB 32 dup(0)
+OOUT DB 32 dup(0)
 
 NLINE DB 13,10, '$'
 
@@ -43,16 +45,24 @@ main:LEA DX,IMSG   ; offset of the message to DX
     MOV AH,0  
     MOV DI,0         
            
-loop1: MOV AL, [si]      ; read the character
+loop1: MOV AL, [si]      ; read the character, input for Encrypt and Decrypt
+       LEA DX,DOUT ; this defines the output location of Decrypt function, DOUT (Decrypted Output)
        CALL Encrypt
        CALL Decrypt
+       
+       MOV AL, EOUT[DI]  ; input for Decrypt is the output of Encrypt
+       LEA DX, OOUT      ; output of Decrypt pointed to OOUT (Original Output) 
+       CALL Decrypt
+       
        INC SI            ; increasing SI to point to the next char 
        INC DI            ; increasing DI to point to the next empty char
-       LOOP loop1        ; looping over the string                
+       LOOP loop1        ; looping over the string 
+                   
     
     ; adding '$' to EOUT and DOUT
     MOV EOUT[DI+1],'$'   
     MOV DOUT[DI+1],'$'
+    MOV OOUT[DI+1],'$'
     
     ; printing outputs
     
@@ -68,7 +78,14 @@ loop1: MOV AL, [si]      ; read the character
     LEA DX,DOUT 
     CALL OutString    
     
-    CALL NewLine             
+    CALL NewLine
+    
+    LEA DX,OMSG
+    CALL OutString
+    LEA DX,OOUT 
+    CALL OutString    
+    
+    CALL NewLine               
     
 jmp main   
         
@@ -90,6 +107,7 @@ PROC Decrypt NEAR
     PUSH AX
     PUSH CX
     PUSH SI
+    PUSH BX
     
     MOV SI,0
     LEA BX,ENC
@@ -101,8 +119,10 @@ loop2: CMP ENC[SI], AL
        LOOP loop2 
 found: MOV AX,SI ; AL = index of the character
        ADD AL,61h ; convert to ASCII (add 'a')
-       MOV DOUT[DI],AL
-             
+       MOV BX,DX
+       MOV [BX+DI],AL
+    
+    POP BX         
     POP SI
     POP CX
     POP AX
