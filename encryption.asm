@@ -28,17 +28,15 @@ buff        db  32        ;MAX NUMBER OF CHARACTERS ALLOWED (32).
                  ; into register AX                           
     MOV DS,AX    ;initialise data segment to the .DATA label
        
-    LEA DX,IMSG   ; offset of the message to DX
+main:LEA DX,IMSG   ; offset of the message to DX
     CALL OutString
     
     MOV AH, 0Ah   ; capture string from keyboard
     LEA DX, buff
     INT 21h 
+      
+    CALL NewLine
     
-    CALL NewLine  
-    LEA DX,EMSG
-    CALL OutString   
-
     MOV CL,buff+1    ; CL = number of entered characters
     MOV CH,0
     
@@ -48,16 +46,32 @@ buff        db  32        ;MAX NUMBER OF CHARACTERS ALLOWED (32).
            
 loop1: MOV AL, [si]      ; read the character
        CALL Encrypt
-       MOV DL,EOUT[DI]
-       CALL OutChar
+       CALL Decrypt
        INC SI            ; increasing SI to point to the next char 
        INC DI            ; increasing DI to point to the next empty char
        LOOP loop1        ; looping over the string                
-       
     
-                 
+    ; adding '$' to EOUT and DOUT
+    MOV EOUT[DI+1],'$'   
+    MOV DOUT[DI+1],'$'
     
-here: jmp here   
+    ; printing outputs
+    
+    LEA DX,EMSG
+    CALL OutString
+    LEA DX,EOUT 
+    CALL OutString 
+    
+    CALL NewLine
+    
+    LEA DX,DMSG
+    CALL OutString
+    LEA DX,DOUT 
+    CALL OutString    
+    
+    CALL NewLine             
+    
+jmp main   
         
 ret
  
@@ -66,7 +80,7 @@ PROC Encrypt NEAR
     PUSH BX
     SUB AL, 61h       ; index relative to 'a'
     LEA BX, ENC       ; table B contains the encrypted characters
-    XLATB 
+    XLATB             
     MOV EOUT[DI],AL   ; save to memory
     POP BX                   
     POP AX
@@ -75,9 +89,23 @@ ENDP Encrypt
 
 PROC Decrypt NEAR
     PUSH AX
-    PUSH BX
+    PUSH CX
+    PUSH SI
     
-    POP BX
+    MOV SI,0
+    LEA BX,ENC
+    MOV CL,26
+    
+loop2: CMP ENC[SI], AL
+       JE found
+       INC SI
+       LOOP loop2 
+found: MOV AX,SI ; AL = index of the character
+       ADD AL,61h ; convert to ASCII (add 'a')
+       MOV DOUT[DI],AL
+             
+    POP SI
+    POP CX
     POP AX
     RET
 ENDP Encrypt
