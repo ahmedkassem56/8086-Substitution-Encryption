@@ -48,8 +48,8 @@ buff        db  32        ;MAX NUMBER OF CHARACTERS ALLOWED (32).
            
 loop1: MOV AL, [si]      ; read the character
        CALL Encrypt
-       CALL Decrypt
-       
+       MOV DL,EOUT[DI]
+       CALL OutChar
        INC SI            ; increasing SI to point to the next char 
        INC DI            ; increasing DI to point to the next empty char
        LOOP loop1        ; looping over the string                
@@ -66,14 +66,21 @@ PROC Encrypt NEAR
     PUSH BX
     SUB AL, 61h       ; index relative to 'a'
     LEA BX, ENC       ; table B contains the encrypted characters
-    ADD BL, AL        ; add index
-    MOV AL,[BX]       ; load encrypted character to AL
+    XLATB 
     MOV EOUT[DI],AL   ; save to memory
-    POP BX
+    POP BX                   
     POP AX
     RET
 ENDP Encrypt
 
+PROC Decrypt NEAR
+    PUSH AX
+    PUSH BX
+    
+    POP BX
+    POP AX
+    RET
+ENDP Encrypt
 
  
 PROC NewLine NEAR
