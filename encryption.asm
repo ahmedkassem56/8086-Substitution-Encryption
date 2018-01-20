@@ -34,7 +34,7 @@ main:LEA DX,IMSG   ; offset of the message to DX
     
     MOV AH, 0Ah   ; capture string from keyboard
     LEA DX, buff
-    INT 21h 
+    INT 21h         ; calling MS-DOS API
       
     CALL NewLine
     
@@ -46,8 +46,9 @@ main:LEA DX,IMSG   ; offset of the message to DX
     MOV DI,0         
            
 loop1: MOV AL, [si]      ; read the character, input for Encrypt and Decrypt
-       LEA DX,DOUT ; this defines the output location of Decrypt function, DOUT (Decrypted Output)
+       LEA DX,EOUT ; this defines the output location of Encrypt function, EOUT (Ecrypted Output)
        CALL Encrypt
+       LEA DX,DOUT ; this defines the output location of Decrypt function, DOUT (Decrypted Output)
        CALL Decrypt
        
        MOV AL, EOUT[DI]  ; input for Decrypt is the output of Encrypt
@@ -59,15 +60,15 @@ loop1: MOV AL, [si]      ; read the character, input for Encrypt and Decrypt
        LOOP loop1        ; looping over the string 
                    
     
-    ; adding '$' to EOUT and DOUT (end of string so that we can print it)
+    ; adding '$' to EOUT,DOUT and OOUT (end of string so that we can print it)
     MOV EOUT[DI+1],'$'   
     MOV DOUT[DI+1],'$'
     MOV OOUT[DI+1],'$'
     
     ; printing outputs
     
-    LEA DX,EMSG
-    CALL OutString
+    LEA DX,EMSG                ; loading string address into DX
+    CALL OutString             ; calling OutString procedure
     LEA DX,EOUT 
     CALL OutString 
     
@@ -85,6 +86,7 @@ loop1: MOV AL, [si]      ; read the character, input for Encrypt and Decrypt
     LEA DX,OOUT 
     CALL OutString    
     
+    CALL NewLine
     CALL NewLine               
     
 jmp main   
@@ -96,14 +98,15 @@ PROC Encrypt NEAR
     PUSH BX
     SUB AL, 61h       ; index relative to 'a'
     LEA BX, ENC       ; table B contains the encrypted characters
-    XLATB             
-    MOV EOUT[DI],AL   ; save to memory
+    XLATB
+    MOV BX,DX             
+    MOV BX[DI],AL   ; save into output buffer
     POP BX                   
     POP AX
     RET
 ENDP Encrypt
 
-PROC Decrypt NEAR
+PROC Decrypt NEAR  ; DX = output buffer offset / DI = output buffer index
     PUSH AX
     PUSH CX
     PUSH SI
@@ -113,14 +116,14 @@ PROC Decrypt NEAR
     LEA BX,ENC
     MOV CL,26
     
-loop2: CMP ENC[SI], AL ; comparing AL with the look up table elements 
+loop2: CMP ENC[SI], AL ; comparing AL with the look up table elements (searching the encrypted table for the character) 
        JE found
        INC SI
        LOOP loop2 
-found: MOV AX,SI ; AL = index of the character
-       ADD AL,61h ; convert to ASCII (add 'a')
+found: MOV AX,SI ; AL = index of the character in the encryption table
+       ADD AL,61h ; convert to corresponding decrypted character (add 'a')
        MOV BX,DX
-       MOV [BX+DI],AL
+       MOV [BX+DI],AL ; saving into output buffer
     
     POP BX         
     POP SI
